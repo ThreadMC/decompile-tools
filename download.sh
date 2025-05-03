@@ -8,6 +8,9 @@ set -e # Exit immediately if a command exits with a non-zero status.
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+TOOLS_DIR="$SCRIPT_DIR/tools"
+mkdir -p "$TOOLS_DIR"
+
 # --- Helper Functions ---
 
 # Check if required commands exist
@@ -36,48 +39,66 @@ download_file() {
     fi
 }
 
+# Download latest version from Maven Central by groupId, artifactId, and save as
+download_latest_maven_jar() {
+    local group_id="$1"
+    local artifact_id="$2"
+    local dest_path="$3"
+    echo "   Fetching latest version for $artifact_id from Maven Central..."
+    local group_url="${group_id//./\/}"
+    local metadata_url="https://repo1.maven.org/maven2/$group_url/$artifact_id/maven-metadata.xml"
+    local latest_version
+    latest_version=$(curl -fsSL "$metadata_url" | grep -oPm1 "(?<=<latest>)[^<]+")
+    if [ -z "$latest_version" ]; then
+        # fallback to <release> if <latest> is not present
+        latest_version=$(curl -fsSL "$metadata_url" | grep -oPm1 "(?<=<release>)[^<]+")
+    fi
+    if [ -z "$latest_version" ]; then
+        echo "   Error: Could not determine latest version for $artifact_id" >&2
+        return 1
+    fi
+    local jar_url="https://repo1.maven.org/maven2/$group_url/$artifact_id/$latest_version/$artifact_id-$latest_version.jar"
+    download_file "$jar_url" "$dest_path"
+}
+
 # --- Application Specific Download Functions ---
 
-download_forgeflower() {
-    echo "Starting ForgeFlower download..."
-    # Define constants for ForgeFlower Maven
-    local FORGE_MAVEN_BASE_URL="https://maven.minecraftforge.net/net/minecraftforge/forgeflower"
-    local LATEST_VERSION_URL="$FORGE_MAVEN_BASE_URL/latest"
-    local DESTINATION_FOLDER="$SCRIPT_DIR/dependencies/forgeflower" # Specific subfolder
-    local SAVE_AS="forgeflower.jar"
+download_cfr() {
+    echo "Starting CFR download..."
+    # Change pattern to: cfr-.*.jar (no backslash before dot)
+    download_latest_maven_jar "org.benf" "cfr" "$TOOLS_DIR/cfr.jar"
+}
 
-    echo "Creating destination folder (if it doesn't exist): $DESTINATION_FOLDER"
-    mkdir -p "$DESTINATION_FOLDER"
+download_specialsource() {
+    echo "Starting SpecialSource download..."
+    # Change pattern to: SpecialSource-.*.jar (no backslash before dot)
+    download_latest_maven_jar "net.md-5" "SpecialSource" "$TOOLS_DIR/specialsource.jar"
+}
 
-    echo "Fetching latest version string from: $LATEST_VERSION_URL"
-    local latest_version
-    latest_version=$(curl -fsSL "$LATEST_VERSION_URL")
-    if [ $? -ne 0 ] || [ -z "$latest_version" ]; then
-        echo "Error: Failed to fetch latest version string from $LATEST_VERSION_URL." >&2
-        return 1
-    fi
-    # Trim potential whitespace/newlines
-    latest_version=$(echo "$latest_version" | tr -d '[:space:]')
-    if [ -z "$latest_version" ]; then
-        echo "Error: Fetched version string is empty." >&2
-        return 1
-    fi
+download_jopt_simple() {
+    echo "Starting jopt-simple download..."
+    download_latest_maven_jar "net.sf.jopt-simple" "jopt-simple" "$TOOLS_DIR/jopt-simple.jar"
+}
 
-    echo "Latest ForgeFlower version found: $latest_version"
+download_asm() {
+    echo "Starting ASM downloads..."
+    download_latest_maven_jar "org.ow2.asm" "asm" "$TOOLS_DIR/asm.jar"
+    download_latest_maven_jar "org.ow2.asm" "asm-commons" "$TOOLS_DIR/asm-commons.jar"
+    download_latest_maven_jar "org.ow2.asm" "asm-util" "$TOOLS_DIR/asm-util.jar"
+    download_latest_maven_jar "org.ow2.asm" "asm-tree" "$TOOLS_DIR/asm-tree.jar"
+}
 
-    # Construct the download URL
-    local jar_filename="forgeflower-$latest_version.jar"
-    local download_url="$FORGE_MAVEN_BASE_URL/$latest_version/$jar_filename"
-    local dest_path="$DESTINATION_FOLDER/$SAVE_AS"
+download_guava() {
+    echo "Starting Guava download..."
+    download_latest_maven_jar "com.google.guava" "guava" "$TOOLS_DIR/guava.jar"
+}
 
-    echo "Attempting to download ForgeFlower JAR..."
-    if download_file "$download_url" "$dest_path"; then
-        echo "ForgeFlower download process finished successfully."
-        return 0
-    else
-        echo "Error: Failed to download ForgeFlower JAR from $download_url" >&2
-        return 1
-    fi
+download_all() {
+    download_cfr
+    download_specialsource
+    download_jopt_simple
+    download_asm
+    download_guava
 }
 
 # --- Main Script ---
@@ -85,8 +106,8 @@ download_forgeflower() {
 # Check for required argument
 if [ -z "$1" ]; then
     echo "Usage: $0 <application_name>"
-    echo "Example: $0 forgeflower"
-    # Add more examples here as you add applications
+    echo "Example: $0 cfr"
+    echo "Available applications: cfr, specialsource, jopt-simple, asm, guava, all"
     exit 1
 fi
 
@@ -98,16 +119,27 @@ check_command "jq"
 
 # Execute download based on argument
 case "$APP_TO_INSTALL" in
-    forgeflower)
-        download_forgeflower
+    cfr)
+        download_cfr
         ;;
-    # Add more applications here like:
-    # vineflower)
-    #    download_vineflower
-    #    ;;
+    specialsource)
+        download_specialsource
+        ;;
+    jopt-simple)
+        download_jopt_simple
+        ;;
+    asm)
+        download_asm
+        ;;
+    guava)
+        download_guava
+        ;;
+    all)
+        download_all
+        ;;
     *)
         echo "Error: Unknown application '$APP_TO_INSTALL'." >&2
-        echo "Available applications: forgeflower" # Update this list as you add more
+        echo "Available applications: cfr, specialsource, jopt-simple, asm, guava, all"
         exit 1
         ;;
 esac
