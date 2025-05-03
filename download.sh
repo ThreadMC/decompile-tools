@@ -63,9 +63,10 @@ download_latest_maven_jar() {
 
 # --- Application Specific Download Functions ---
 
-download_procyon() {
-    echo "Starting Procyon download..."
-    download_latest_maven_jar "org.bitbucket.mstrobel" "procyon-compilertools" "$TOOLS_DIR/procyon-compilertools.jar"
+download_cfr() {
+    echo "Starting CFR download..."
+    # Change pattern to: cfr-.*.jar (no backslash before dot)
+    download_latest_maven_jar "org.benf" "cfr" "$TOOLS_DIR/cfr.jar"
 }
 
 download_specialsource() {
@@ -93,7 +94,7 @@ download_guava() {
 }
 
 download_all() {
-    download_procyon
+    download_cfr
     download_specialsource
     download_jopt_simple
     download_asm
@@ -105,8 +106,8 @@ download_all() {
 # Check for required argument
 if [ -z "$1" ]; then
     echo "Usage: $0 <application_name>"
-    echo "Example: $0 procyon"
-    echo "Available applications: procyon, specialsource, jopt-simple, asm, guava, all"
+    echo "Example: $0 cfr"
+    echo "Available applications: cfr, specialsource, jopt-simple, asm, guava, all"
     exit 1
 fi
 
@@ -118,8 +119,8 @@ check_command "jq"
 
 # Execute download based on argument
 case "$APP_TO_INSTALL" in
-    procyon)
-        download_procyon
+    cfr)
+        download_cfr
         ;;
     specialsource)
         download_specialsource

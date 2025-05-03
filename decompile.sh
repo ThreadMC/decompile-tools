@@ -15,7 +15,7 @@ info() {
 }
 
 # === Tools ===
-PROCYON_JAR="$SCRIPT_DIR/tools/procyon-compilertools.jar"
+CFR_JAR="$SCRIPT_DIR/tools/cfr.jar"
 SPECIALSOURCE_JAR="$SCRIPT_DIR/tools/specialsource.jar"
 JOPT_SIMPLE_JAR="$SCRIPT_DIR/tools/jopt-simple.jar"
 ASM_JAR="$SCRIPT_DIR/tools/asm.jar"
@@ -25,7 +25,7 @@ ASM_TREE_JAR="$SCRIPT_DIR/tools/asm-tree.jar"
 GUAVA_JAR="$SCRIPT_DIR/tools/guava.jar"
 
 # === Check for required tools ===
-[ -f "$PROCYON_JAR" ] || error_exit "Procyon Compilertools not found: $PROCYON_JAR"
+[ -f "$CFR_JAR" ] || error_exit "CFR Decompiler not found: $CFR_JAR"
 [ -f "$SPECIALSOURCE_JAR" ] || error_exit "SpecialSource not found: $SPECIALSOURCE_JAR"
 [ -f "$JOPT_SIMPLE_JAR" ] || error_exit "jopt-simple not found: $JOPT_SIMPLE_JAR"
 [ -f "$ASM_JAR" ] || error_exit "ASM not found: $ASM_JAR"
@@ -98,8 +98,8 @@ java -cp "$SPECIALSOURCE_JAR:$JOPT_SIMPLE_JAR:$ASM_JAR:$ASM_COMMONS_JAR:$ASM_UTI
   -o build/server-mapped.jar
 
 # === Decompile ===
-info "Decompiling mapped jar (via Procyon)..."
+info "Decompiling mapped jar (via CFR)..."
 mkdir -p sources
-java -jar "$PROCYON_JAR" build/server-mapped.jar -o sources
+java -jar "$CFR_JAR" build/server-mapped.jar --outputdir sources --caseinsensitivefs true --silent true
 
 echo "[✓] Done! Decompiled sources in: $(realpath sources)"
