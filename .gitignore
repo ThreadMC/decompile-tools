@@ -1,1 +1,5 @@
-tools
+tools/
+build/
+sources/
+*.jar
+*.txt
