@@ -1,0 +1,3 @@
+[submodule "server-jars"]
+	path = server-jars
+	url = https://github.com/threadmc/server-jars.git
