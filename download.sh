@@ -63,11 +63,6 @@ download_latest_maven_jar() {
 
 # --- Application Specific Download Functions ---
 
-download_vineflower() {
-    echo "Starting Vineflower download..."
-    download_latest_maven_jar "org.vineflower" "vineflower" "$TOOLS_DIR/vineflower.jar"
-}
-
 download_specialsource() {
     echo "Starting SpecialSource download..."
     download_latest_maven_jar "net.md-5" "SpecialSource" "$TOOLS_DIR/specialsource.jar"
@@ -91,8 +86,13 @@ download_guava() {
     download_latest_maven_jar "com.google.guava" "guava" "$TOOLS_DIR/guava.jar"
 }
 
+download_cfr() {
+    echo "Starting CFR download..."
+    download_latest_maven_jar "org.benf" "cfr" "$TOOLS_DIR/cfr.jar"
+}
+
 download_all() {
-    download_vineflower
+    download_cfr
     download_specialsource
     download_jopt_simple
     download_asm
@@ -104,8 +104,8 @@ download_all() {
 # Check for required argument
 if [ -z "$1" ]; then
     echo "Usage: $0 <application_name>"
-    echo "Example: $0 vineflower"
-    echo "Available applications: vineflower, specialsource, jopt-simple, asm, guava, all"
+    echo "Example: $0 cfr"
+    echo "Available applications: cfr, specialsource, jopt-simple, asm, guava, all"
     exit 1
 fi
 
@@ -117,8 +117,8 @@ check_command "jq"
 
 # Execute download based on argument
 case "$APP_TO_INSTALL" in
-    vineflower)
-        download_vineflower
+    cfr)
+        download_cfr
         ;;
     specialsource)
         download_specialsource
@@ -137,7 +137,7 @@ case "$APP_TO_INSTALL" in
         ;;
     *)
         echo "Error: Unknown application '$APP_TO_INSTALL'." >&2
-        echo "Available applications: vineflower, specialsource, jopt-simple, asm, guava, all"
+        echo "Available applications: cfr, specialsource, jopt-simple, asm, guava, all"
         exit 1
         ;;
 esac

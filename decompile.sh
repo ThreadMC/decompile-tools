@@ -15,7 +15,6 @@ info() {
 }
 
 # === Tools ===
-VINEFLOWER_JAR="$SCRIPT_DIR/tools/vineflower.jar"
 SPECIALSOURCE_JAR="$SCRIPT_DIR/tools/specialsource.jar"
 JOPT_SIMPLE_JAR="$SCRIPT_DIR/tools/jopt-simple.jar"
 ASM_JAR="$SCRIPT_DIR/tools/asm.jar"
@@ -23,9 +22,9 @@ ASM_COMMONS_JAR="$SCRIPT_DIR/tools/asm-commons.jar"
 ASM_UTILS_JAR="$SCRIPT_DIR/tools/asm-util.jar"
 ASM_TREE_JAR="$SCRIPT_DIR/tools/asm-tree.jar"
 GUAVA_JAR="$SCRIPT_DIR/tools/guava.jar"
+CFR_JAR="$SCRIPT_DIR/tools/cfr.jar"
 
 # === Check for required tools ===
-[ -f "$VINEFLOWER_JAR" ] || error_exit "Vineflower Decompiler not found: $VINEFLOWER_JAR"
 [ -f "$SPECIALSOURCE_JAR" ] || error_exit "SpecialSource not found: $SPECIALSOURCE_JAR"
 [ -f "$JOPT_SIMPLE_JAR" ] || error_exit "jopt-simple not found: $JOPT_SIMPLE_JAR"
 [ -f "$ASM_JAR" ] || error_exit "ASM not found: $ASM_JAR"
@@ -33,6 +32,7 @@ GUAVA_JAR="$SCRIPT_DIR/tools/guava.jar"
 [ -f "$ASM_UTILS_JAR" ] || error_exit "ASM Utils not found: $ASM_UTILS_JAR"
 [ -f "$ASM_TREE_JAR" ] || error_exit "ASM Tree not found: $ASM_TREE_JAR"
 command -v jq >/dev/null 2>&1 || error_exit "'jq' is required but not installed. Please install jq."
+[ -f "$CFR_JAR" ] || error_exit "CFR Decompiler not found: $CFR_JAR"
 
 # === Check argument ===
 if [ -z "$1" ]; then
@@ -98,8 +98,8 @@ java -cp "$SPECIALSOURCE_JAR:$JOPT_SIMPLE_JAR:$ASM_JAR:$ASM_COMMONS_JAR:$ASM_UTI
   -o build/server-mapped.jar
 
 # === Decompile ===
-info "Decompiling mapped jar (via Vineflower)..."
+info "Decompiling mapped jar (via CFR)..."
 mkdir -p sources
-java -jar "$VINEFLOWER_JAR" --silent build/server-mapped.jar sources
+java -jar "$CFR_JAR" build/server-mapped.jar --outputdir sources
 
 echo "[✓] Done! Decompiled sources in: $(realpath sources)"
