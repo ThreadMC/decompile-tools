@@ -9,7 +9,7 @@ A set of scripts and helpers to automate downloading, mapping, and decompiling M
 
 ## Features
 
-- Downloads the latest versions of decompilation tools (CFR, SpecialSource, ASM, Guava, etc.)
+- Downloads the latest versions of decompilation tools (VineFlower, SpecialSource, ASM, Guava, etc.)
 - Fetches Minecraft server jars and official mappings for any version
 - Applies mappings and decompiles to readable Java source code
 - Fully automated and cross-platform (requires Bash, curl, jq, and Java)
@@ -47,7 +47,7 @@ If you discover a security vulnerability, please report it privately.
 
 ## Acknowledgements
 
-- [CFR](https://www.benf.org/other/cfr/) (Decompiler)
+- [VineFlower](https://github.com/Vineflower/vineflower) (Decompiler)
 - [SpecialSource](https://github.com/md-5/SpecialSource)
 - [ASM](https://asm.ow2.io/)
 - [Guava](https://github.com/google/guava)
