@@ -24,7 +24,7 @@ New-Item -ItemType Directory -Path $WorkDir -Force | Out-Null
 Set-Location $WorkDir
 
 $ToolsDir = Join-Path $ScriptDir "tools"
-$SpecialSourceJar = Join-Path $ToolsDir "specialsource.jar"
+$TRCJar = Join-Path $ToolsDir "trc.jar"
 $JoptSimpleJar = Join-Path $ToolsDir "jopt-simple.jar"
 $AsmJar = Join-Path $ToolsDir "asm.jar"
 $AsmCommonsJar = Join-Path $ToolsDir "asm-commons.jar"
@@ -33,7 +33,7 @@ $AsmTreeJar = Join-Path $ToolsDir "asm-tree.jar"
 $GuavaJar = Join-Path $ToolsDir "guava.jar"
 $VineflowerJar = Join-Path $ToolsDir "vineflower.jar"
 
-$RequiredFiles = @($VineflowerJar, $SpecialSourceJar, $JoptSimpleJar, $AsmJar, $AsmCommonsJar, $AsmUtilJar, $AsmTreeJar, $GuavaJar)
+$RequiredFiles = @($VineflowerJar, $TRCJar, $JoptSimpleJar, $AsmJar, $AsmCommonsJar, $AsmUtilJar, $AsmTreeJar, $GuavaJar)
 foreach ($File in $RequiredFiles) {
     if (-not (Test-Path $File)) {
         Error-Exit "Required tool not found: $File"
@@ -112,16 +112,31 @@ if (-not $MappingsUrl) {
 }
 
 Info "Downloading mappings..."
-Invoke-WebRequest -Uri $MappingsUrl -OutFile "mappings.txt" -UseBasicParsing
+Invoke-WebRequest -Uri $MappingsUrl -OutFile "mappings.tiny" -UseBasicParsing
+
+$Mappings = Get-Content "mappings.tiny"
+if ($Mappings.Count -eq 0) {
+    Set-Content "mappings.tiny" "tiny	2	0	obf	official"
+} else {
+    $NewMappings = @()
+    $NewMappings += $Mappings[0]
+    $NewMappings += "tiny	2	0	obf	official"
+    if ($Mappings.Count -gt 1) {
+        $NewMappings += $Mappings[1..($Mappings.Count-1)]
+    }
+    Set-Content "mappings.tiny" $NewMappings
+}
 
 Info "Applying mappings..."
 New-Item -ItemType Directory -Path "build" -Force | Out-Null
 $MappedJar = "build\server-mapped.jar"
-$Classpath = "$SpecialSourceJar;$JoptSimpleJar;$AsmJar;$AsmCommonsJar;$AsmUtilJar;$AsmTreeJar;$GuavaJar"
-& java -cp $Classpath net.md_5.specialsource.SpecialSource `
-    -i $ServerJarPath `
-    -m "mappings.txt" `
-    -o $MappedJar
+$Classpath = "$TRCJar;$JoptSimpleJar;$AsmJar;$AsmCommonsJar;$AsmUtilJar;$AsmTreeJar;$GuavaJar"
+& java -cp $Classpath com.threadmc.trc.Main `
+    --input "$ServerJarPath" `
+    --output "$MappedJar" `
+    --mappings "mappings.tiny" `
+    --from "obf" `
+    --to "official"
 
 Info "Decompiling with VineFlower..."
 New-Item -ItemType Directory -Path "sources" -Force | Out-Null

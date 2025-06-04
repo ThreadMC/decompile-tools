@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("vineflower", "specialsource", "jopt-simple", "asm", "guava", "all")]
+    [ValidateSet("vineflower", "trc", "jopt-simple", "asm", "guava", "all")]
     [string]$App
 )
 
@@ -46,6 +46,26 @@ function Download-Maven-Jar {
     Download-File -Url $JarUrl -Destination $DestinationPath
 }
 
+function Download-GitHub-Jar {
+    param (
+        [string]$Repo,
+        [string]$JarPattern,
+        [string]$DestinationPath
+    )
+    $ApiUrl = "https://api.github.com/repos/${Repo}/releases/latest"
+    try {
+        $Release = Invoke-WebRequest -Uri $ApiUrl -UseBasicParsing | ConvertFrom-Json
+        $Asset = $Release.assets | Where-Object { $_.name -like $JarPattern }
+        if ($null -eq $Asset) {
+            Write-Error "Asset matching pattern '${JarPattern}' not found in latest release of ${Repo}"
+            return
+        }
+        Download-File -Url $Asset.browser_download_url -Destination $DestinationPath
+    } catch {
+        Write-Error "Failed to retrieve latest release for ${Repo}"
+    }
+}
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $ToolsDir = Join-Path $ScriptDir "tools"
 New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
@@ -54,8 +74,8 @@ switch ($App) {
     "vineflower" {
         Download-Maven-Jar -GroupId "org.vineflower" -ArtifactId "vineflower" -DestinationPath "$ToolsDir\vineflower.jar"
     }
-    "specialsource" {
-        Download-Maven-Jar -GroupId "net.md-5" -ArtifactId "SpecialSource" -DestinationPath "$ToolsDir\specialsource.jar"
+    "trc" {
+        Download-GitHub-Jar -Repo "threadmc/tinyremapper-cli" -JarPattern "tinyremapper-cli-*.jar" -DestinationPath "$ToolsDir\trc.jar"
     }
     "jopt-simple" {
         Download-Maven-Jar -GroupId "net.sf.jopt-simple" -ArtifactId "jopt-simple" -DestinationPath "$ToolsDir\jopt-simple.jar"
@@ -71,7 +91,7 @@ switch ($App) {
     }
     "all" {
         & $MyInvocation.MyCommand.Definition -App "vineflower"
-        & $MyInvocation.MyCommand.Definition -App "specialsource"
+        & $MyInvocation.MyCommand.Definition -App "trc"
         & $MyInvocation.MyCommand.Definition -App "jopt-simple"
         & $MyInvocation.MyCommand.Definition -App "asm"
         & $MyInvocation.MyCommand.Definition -App "guava"

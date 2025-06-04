@@ -89,6 +89,19 @@ MAPPINGS_URL=$(curl -s "$VERSION_URL" | jq -r '.downloads.server_mappings.url //
 
 curl -o mappings.txt "$MAPPINGS_URL"
 
+# === Fix mappings format ===
+info "Fixing mappings format to Tiny v2..."
+TINY_HEADER="tiny\t2\t0\tobf\tofficial"
+
+awk -v header="$TINY_HEADER" '
+    NR==1 && /^#/ {
+        print $0;
+        print header;
+        next;
+    }
+    { print }
+' mappings.txt > mappings.txt.tmp && mv mappings.txt.tmp mappings.txt
+
 # === Apply mappings ===
 info "Applying mappings (via SpecialSource)..."
 mkdir -p build

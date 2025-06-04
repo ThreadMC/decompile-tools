@@ -61,11 +61,28 @@ download_latest_maven_jar() {
     download_file "$jar_url" "$dest_path"
 }
 
+# Download a jar from the latest GitHub release matching a pattern
+download_github_jar() {
+    local repo="$1"
+    local jar_pattern="$2"
+    local dest_path="$3"
+    local api_url="https://api.github.com/repos/${repo}/releases/latest"
+    echo "   Fetching latest release from $repo..."
+    local asset_url
+    asset_url=$(curl -fsSL "$api_url" | jq -r --arg pattern "$jar_pattern" '
+        .assets[] | select(.name | test($pattern)) | .browser_download_url' | head -n 1)
+    if [ -z "$asset_url" ] || [ "$asset_url" = "null" ]; then
+        echo "   Error: Asset matching pattern '$jar_pattern' not found in latest release of $repo" >&2
+        return 1
+    fi
+    download_file "$asset_url" "$dest_path"
+}
+
 # --- Application Specific Download Functions ---
 
-download_specialsource() {
-    echo "Starting SpecialSource download..."
-    download_latest_maven_jar "net.md-5" "SpecialSource" "$TOOLS_DIR/specialsource.jar"
+download_trc() {
+    echo "Starting TinyRemapper CLI (trc) download..."
+    download_github_jar "threadmc/tinyremapper-cli" "tinyremapper-cli-.*\.jar" "$TOOLS_DIR/trc.jar"
 }
 
 download_jopt_simple() {
@@ -93,7 +110,7 @@ download_vineflower() {
 
 download_all() {
     download_vineflower
-    download_specialsource
+    download_trc
     download_jopt_simple
     download_asm
     download_guava
@@ -105,7 +122,7 @@ download_all() {
 if [ -z "$1" ]; then
     echo "Usage: $0 <application_name>"
     echo "Example: $0 vineflower"
-    echo "Available applications: vineflower, specialsource, jopt-simple, asm, guava, all"
+    echo "Available applications: vineflower, trc, jopt-simple, asm, guava, all"
     exit 1
 fi
 
@@ -120,8 +137,8 @@ case "$APP_TO_INSTALL" in
     vineflower)
         download_vineflower
         ;;
-    specialsource)
-        download_specialsource
+    trc)
+        download_trc
         ;;
     jopt-simple)
         download_jopt_simple
@@ -137,7 +154,7 @@ case "$APP_TO_INSTALL" in
         ;;
     *)
         echo "Error: Unknown application '$APP_TO_INSTALL'." >&2
-        echo "Available applications: cfr, specialsource, jopt-simple, asm, guava, all"
+        echo "Available applications: cfr, trc, jopt-simple, asm, guava, all"
         exit 1
         ;;
 esac
