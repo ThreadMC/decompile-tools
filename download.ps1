@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("vineflower", "trc", "jopt-simple", "asm", "guava", "all")]
+    [ValidateSet("vineflower", "specialsource", "trc", "jopt-simple", "asm", "guava", "all")]
     [string]$App
 )
 
@@ -74,8 +74,11 @@ switch ($App) {
     "vineflower" {
         Download-Maven-Jar -GroupId "org.vineflower" -ArtifactId "vineflower" -DestinationPath "$ToolsDir\vineflower.jar"
     }
+    "specialsource" {
+        Download-Maven-Jar -GroupId "net.md-5" -ArtifactId "SpecialSource" -DestinationPath "$ToolsDir\specialsource.jar"
+    }
     "trc" {
-        Download-GitHub-Jar -Repo "threadmc/tinyremapper-cli" -JarPattern "tinyremapper-cli-*.jar" -DestinationPath "$ToolsDir\trc.jar"
+        Download-GitHub-Jar -Repo "threadmc/trc" -JarPattern "trc-*.jar" -DestinationPath "$ToolsDir\trc.jar"
     }
     "jopt-simple" {
         Download-Maven-Jar -GroupId "net.sf.jopt-simple" -ArtifactId "jopt-simple" -DestinationPath "$ToolsDir\jopt-simple.jar"
@@ -91,6 +94,7 @@ switch ($App) {
     }
     "all" {
         & $MyInvocation.MyCommand.Definition -App "vineflower"
+        & $MyInvocation.MyCommand.Definition -App "specialsource"
         & $MyInvocation.MyCommand.Definition -App "trc"
         & $MyInvocation.MyCommand.Definition -App "jopt-simple"
         & $MyInvocation.MyCommand.Definition -App "asm"
