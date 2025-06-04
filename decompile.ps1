@@ -31,9 +31,9 @@ $AsmCommonsJar = Join-Path $ToolsDir "asm-commons.jar"
 $AsmUtilJar = Join-Path $ToolsDir "asm-util.jar"
 $AsmTreeJar = Join-Path $ToolsDir "asm-tree.jar"
 $GuavaJar = Join-Path $ToolsDir "guava.jar"
-$CfrJar = Join-Path $ToolsDir "cfr.jar"
+$VineflowerJar = Join-Path $ToolsDir "vineflower.jar"
 
-$RequiredFiles = @($CfrJar, $SpecialSourceJar, $JoptSimpleJar, $AsmJar, $AsmCommonsJar, $AsmUtilJar, $AsmTreeJar, $GuavaJar)
+$RequiredFiles = @($VineflowerJar, $SpecialSourceJar, $JoptSimpleJar, $AsmJar, $AsmCommonsJar, $AsmUtilJar, $AsmTreeJar, $GuavaJar)
 foreach ($File in $RequiredFiles) {
     if (-not (Test-Path $File)) {
         Error-Exit "Required tool not found: $File"
@@ -106,7 +106,7 @@ if ($HasBundler) {
     $ServerJarPath = "server.jar"
 }
 
-$MappingsUrl = $VersionData.downloads.client_mappings.url
+$MappingsUrl = $VersionData.downloads.server_mappings.url
 if (-not $MappingsUrl) {
     Error-Exit "Mappings URL not found for version $McVersion."
 }
@@ -123,8 +123,8 @@ $Classpath = "$SpecialSourceJar;$JoptSimpleJar;$AsmJar;$AsmCommonsJar;$AsmUtilJa
     -m "mappings.txt" `
     -o $MappedJar
 
-Info "Decompiling with CFR..."
+Info "Decompiling with VineFlower..."
 New-Item -ItemType Directory -Path "sources" -Force | Out-Null
-& java -jar $CfrJar $MappedJar --outputdir sources
+& java -jar $VineflowerJar $MappedJar --outputdir sources
 
 Info "Decompilation complete. Sources located at: $(Resolve-Path 'sources')"

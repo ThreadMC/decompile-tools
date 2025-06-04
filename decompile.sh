@@ -22,7 +22,7 @@ ASM_COMMONS_JAR="$SCRIPT_DIR/tools/asm-commons.jar"
 ASM_UTILS_JAR="$SCRIPT_DIR/tools/asm-util.jar"
 ASM_TREE_JAR="$SCRIPT_DIR/tools/asm-tree.jar"
 GUAVA_JAR="$SCRIPT_DIR/tools/guava.jar"
-CFR_JAR="$SCRIPT_DIR/tools/cfr.jar"
+VINEFLOWER_JAR="$SCRIPT_DIR/tools/vineflower.jar"
 
 # === Check for required tools ===
 [ -f "$SPECIALSOURCE_JAR" ] || error_exit "SpecialSource not found: $SPECIALSOURCE_JAR"
@@ -32,7 +32,7 @@ CFR_JAR="$SCRIPT_DIR/tools/cfr.jar"
 [ -f "$ASM_UTILS_JAR" ] || error_exit "ASM Utils not found: $ASM_UTILS_JAR"
 [ -f "$ASM_TREE_JAR" ] || error_exit "ASM Tree not found: $ASM_TREE_JAR"
 command -v jq >/dev/null 2>&1 || error_exit "'jq' is required but not installed. Please install jq."
-[ -f "$CFR_JAR" ] || error_exit "CFR Decompiler not found: $CFR_JAR"
+[ -f "$VINEFLOWER_JAR" ] || error_exit "VineFlower not found: $VINEFLOWER_JAR"
 
 # === Check argument ===
 if [ -z "$1" ]; then
@@ -84,7 +84,7 @@ fi
 
 # === Download mappings ===
 info "Downloading Mojang official mappings..."
-MAPPINGS_URL=$(curl -s "$VERSION_URL" | jq -r '.downloads.client_mappings.url // empty')
+MAPPINGS_URL=$(curl -s "$VERSION_URL" | jq -r '.downloads.server_mappings.url // empty')
 [ -z "$MAPPINGS_URL" ] && error_exit "Mappings for ${MC_VERSION} not found!"
 
 curl -o mappings.txt "$MAPPINGS_URL"
@@ -98,8 +98,8 @@ java -cp "$SPECIALSOURCE_JAR:$JOPT_SIMPLE_JAR:$ASM_JAR:$ASM_COMMONS_JAR:$ASM_UTI
   -o build/server-mapped.jar
 
 # === Decompile ===
-info "Decompiling mapped jar (via CFR)..."
+info "Decompiling mapped jar (via VineFlower)..."
 mkdir -p sources
-java -jar "$CFR_JAR" build/server-mapped.jar --outputdir sources
+java -jar "$VINEFLOWER_JAR" build/server-mapped.jar --outputdir sources
 
 echo "[✓] Done! Decompiled sources in: $(realpath sources)"

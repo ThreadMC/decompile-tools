@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("cfr", "specialsource", "jopt-simple", "asm", "guava", "all")]
+    [ValidateSet("vineflower", "specialsource", "jopt-simple", "asm", "guava", "all")]
     [string]$App
 )
 
@@ -51,8 +51,8 @@ $ToolsDir = Join-Path $ScriptDir "tools"
 New-Item -ItemType Directory -Path $ToolsDir -Force | Out-Null
 
 switch ($App) {
-    "cfr" {
-        Download-Maven-Jar -GroupId "org.benf" -ArtifactId "cfr" -DestinationPath "$ToolsDir\cfr.jar"
+    "vineflower" {
+        Download-Maven-Jar -GroupId "org.vineflower" -ArtifactId "vineflower" -DestinationPath "$ToolsDir\vineflower.jar"
     }
     "specialsource" {
         Download-Maven-Jar -GroupId "net.md-5" -ArtifactId "SpecialSource" -DestinationPath "$ToolsDir\specialsource.jar"
@@ -70,7 +70,7 @@ switch ($App) {
         Download-Maven-Jar -GroupId "com.google.guava" -ArtifactId "guava" -DestinationPath "$ToolsDir\guava.jar"
     }
     "all" {
-        & $MyInvocation.MyCommand.Definition -App "cfr"
+        & $MyInvocation.MyCommand.Definition -App "vineflower"
         & $MyInvocation.MyCommand.Definition -App "specialsource"
         & $MyInvocation.MyCommand.Definition -App "jopt-simple"
         & $MyInvocation.MyCommand.Definition -App "asm"
