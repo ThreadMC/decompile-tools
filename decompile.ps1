@@ -2,8 +2,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$McVersion,
     [string]$WorkDir = "",
-    [ValidateSet("mojang", "fabric")]
-    [string]$MappingType = "mojang"
+    [ValidateSet("mojang", "fabric", "thread")]
+    [string]$MappingType = "thread"
 )
 
 function Error-Exit {
@@ -260,6 +260,54 @@ elseif ($MappingType -eq "fabric") {
     if ($NamedAvailable) {
         $NamedMappedJar = "build\server-named.jar"
         Info "Applying Fabric named mappings with tiny-remapper..."
+        & java -jar $TRCJar `
+            --input "$MappedJar" `
+            --output "$NamedMappedJar" `
+            --mappings $NamedTinyPath `
+            --from "intermediary" `
+            --to "named"
+        $MappedJar = $NamedMappedJar
+    }
+}
+elseif ($MappingType -eq "thread") {
+    # Using mappings from Obscura and Threadline GitHub repos
+    $ObscuraBase = "https://raw.githubusercontent.com/ThreadMC/Obscura/main/mappings/$McVersion"
+    $ThreadlineBase = "https://raw.githubusercontent.com/ThreadMC/Threadline/main/mappings/$McVersion"
+    $TinyPath = Join-Path $WorkDir "intermediary.tiny"
+    $NamedTinyPath = Join-Path $WorkDir "named.tiny"
+
+    $IntermediaryTinyUrl = "$ObscuraBase/intermediary.tiny"
+    $NamedTinyUrl = "$ThreadlineBase/named.tiny"
+
+    Info "Downloading Thread intermediary mappings from Obscura: $IntermediaryTinyUrl"
+    try {
+        Invoke-WebRequest -Uri $IntermediaryTinyUrl -OutFile $TinyPath -UseBasicParsing -ErrorAction Stop
+    } catch {
+        Error-Exit "Failed to download intermediary.tiny from Obscura for $McVersion."
+    }
+
+    Info "Applying Thread intermediary mappings with tiny-remapper..."
+    New-Item -ItemType Directory -Path "build" -Force | Out-Null
+    $MappedJar = "build\server-mapped.jar"
+    & java -jar $TRCJar `
+        --input "$ServerJarPath" `
+        --output "$MappedJar" `
+        --mappings $TinyPath `
+        --from "official" `
+        --to "intermediary"
+
+    $NamedAvailable = $false
+    Info "Downloading Thread named mappings from Threadline: $NamedTinyUrl"
+    try {
+        Invoke-WebRequest -Uri $NamedTinyUrl -OutFile $NamedTinyPath -UseBasicParsing -ErrorAction Stop
+        $NamedAvailable = $true
+    } catch {
+        Info "Thread named mappings not found for this version, skipping named remap."
+        $NamedAvailable = $false
+    }
+    if ($NamedAvailable) {
+        $NamedMappedJar = "build\server-named.jar"
+        Info "Applying Thread named mappings with tiny-remapper..."
         & java -jar $TRCJar `
             --input "$MappedJar" `
             --output "$NamedMappedJar" `
