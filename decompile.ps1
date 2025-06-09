@@ -2,8 +2,8 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$McVersion,
     [string]$WorkDir = "",
-    [ValidateSet("mojang", "fabric", "thread")]
-    [string]$MappingType = "thread"
+    [ValidateSet("mojang", "fabric")]
+    [string]$MappingType = "fabric"
 )
 
 function Error-Exit {
@@ -82,6 +82,39 @@ foreach ($lib in $VersionData.libraries) {
         }
     }
 }
+
+# if ($VersionData.assetIndex -and $VersionData.assetIndex.url) {
+#     $AssetIndexUrl = $VersionData.assetIndex.url
+#     $AssetsDir = Join-Path $WorkDir "assets"
+#     Info "Fetching asset index..."
+#     try {
+#         $AssetIndex = Invoke-WebRequest -Uri $AssetIndexUrl -UseBasicParsing | ConvertFrom-Json
+#     } catch {
+#         Write-Warning "Failed to retrieve asset index from $AssetIndexUrl"
+#         $AssetIndex = $null
+#     }
+#     if ($AssetIndex -and $AssetIndex.objects) {
+#         foreach ($AssetPath in $AssetIndex.objects.PSObject.Properties.Name) {
+#             $AssetInfo = $AssetIndex.objects.$AssetPath
+#             $Hash = $AssetInfo.hash
+#             $Subdir = $Hash.Substring(0, 2)
+#             $AssetUrl = "https://resources.download.minecraft.net/$Subdir/$Hash"
+#             $LocalAssetPath = Join-Path $AssetsDir $AssetPath
+#             $LocalAssetDir = Split-Path $LocalAssetPath -Parent
+#             if (-not (Test-Path $LocalAssetDir)) {
+#                 New-Item -ItemType Directory -Path $LocalAssetDir -Force | Out-Null
+#             }
+#             if (-not (Test-Path $LocalAssetPath)) {
+#                 Info "Downloading asset: $AssetPath"
+#                 try {
+#                     Invoke-WebRequest -Uri $AssetUrl -OutFile $LocalAssetPath -UseBasicParsing -ErrorAction Stop
+#                 } catch {
+#                     Write-Warning "Failed to download asset $AssetPath from $AssetUrl"
+#                 }
+#             }
+#         }
+#     }
+# }
 
 $ServerJarUrl = $VersionData.downloads.server.url
 if (-not $ServerJarUrl) {
@@ -260,54 +293,6 @@ elseif ($MappingType -eq "fabric") {
     if ($NamedAvailable) {
         $NamedMappedJar = "build\server-named.jar"
         Info "Applying Fabric named mappings with tiny-remapper..."
-        & java -jar $TRCJar `
-            --input "$MappedJar" `
-            --output "$NamedMappedJar" `
-            --mappings $NamedTinyPath `
-            --from "intermediary" `
-            --to "named"
-        $MappedJar = $NamedMappedJar
-    }
-}
-elseif ($MappingType -eq "thread") {
-    # Using mappings from Obscura and Threadline GitHub repos
-    $ObscuraBase = "https://raw.githubusercontent.com/ThreadMC/Obscura/main/mappings/$McVersion"
-    $ThreadlineBase = "https://raw.githubusercontent.com/ThreadMC/Threadline/main/mappings/$McVersion"
-    $TinyPath = Join-Path $WorkDir "intermediary.tiny"
-    $NamedTinyPath = Join-Path $WorkDir "named.tiny"
-
-    $IntermediaryTinyUrl = "$ObscuraBase/intermediary.tiny"
-    $NamedTinyUrl = "$ThreadlineBase/named.tiny"
-
-    Info "Downloading Thread intermediary mappings from Obscura: $IntermediaryTinyUrl"
-    try {
-        Invoke-WebRequest -Uri $IntermediaryTinyUrl -OutFile $TinyPath -UseBasicParsing -ErrorAction Stop
-    } catch {
-        Error-Exit "Failed to download intermediary.tiny from Obscura for $McVersion."
-    }
-
-    Info "Applying Thread intermediary mappings with tiny-remapper..."
-    New-Item -ItemType Directory -Path "build" -Force | Out-Null
-    $MappedJar = "build\server-mapped.jar"
-    & java -jar $TRCJar `
-        --input "$ServerJarPath" `
-        --output "$MappedJar" `
-        --mappings $TinyPath `
-        --from "official" `
-        --to "intermediary"
-
-    $NamedAvailable = $false
-    Info "Downloading Thread named mappings from Threadline: $NamedTinyUrl"
-    try {
-        Invoke-WebRequest -Uri $NamedTinyUrl -OutFile $NamedTinyPath -UseBasicParsing -ErrorAction Stop
-        $NamedAvailable = $true
-    } catch {
-        Info "Thread named mappings not found for this version, skipping named remap."
-        $NamedAvailable = $false
-    }
-    if ($NamedAvailable) {
-        $NamedMappedJar = "build\server-named.jar"
-        Info "Applying Thread named mappings with tiny-remapper..."
         & java -jar $TRCJar `
             --input "$MappedJar" `
             --output "$NamedMappedJar" `
