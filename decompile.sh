@@ -57,7 +57,7 @@ VERSION_URL=$(echo "$MANIFEST_JSON" | jq -r --arg VER "$MC_VERSION" '.versions[]
 VERSION_JSON=$(curl -s "$VERSION_URL") || error_exit "Failed to retrieve version data."
 
 # === Download libraries ===
-LIBRARIES_DIR="$WORKDIR/libraries"
+LIBRARIES_DIR="$(dirname "$WORKDIR")/libraries"
 mkdir -p "$LIBRARIES_DIR"
 echo "$VERSION_JSON" | jq -c '.libraries[]?' | while read -r lib; do
   ARTIFACT_URL=$(echo "$lib" | jq -r '.downloads.artifact.url // empty')
@@ -67,10 +67,12 @@ echo "$VERSION_JSON" | jq -c '.libraries[]?' | while read -r lib; do
     LIB_PATH="$LIBRARIES_DIR/$ARTIFACT_PATH"
     LIB_DIR=$(dirname "$LIB_PATH")
     mkdir -p "$LIB_DIR"
-    if [ ! -f "$LIB_PATH" ]; then
-      info "Downloading library: $LIB_NAME"
-      curl -f -L -o "$LIB_PATH" "$ARTIFACT_URL" || echo "Warning: Failed to download $LIB_NAME"
+    if [ -f "$LIB_PATH" ]; then
+      info "Library already exists, skipping download: $LIB_NAME"
+      continue
     fi
+    info "Downloading library: $LIB_NAME"
+    curl -f -L -o "$LIB_PATH" "$ARTIFACT_URL" || echo "Warning: Failed to download $LIB_NAME"
   fi
 done
 

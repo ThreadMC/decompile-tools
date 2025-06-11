@@ -63,7 +63,7 @@ try {
     Error-Exit "Failed to retrieve version data."
 }
 
-$LibrariesDir = Join-Path $WorkDir "libraries"
+$LibrariesDir = Join-Path (Split-Path $WorkDir -Parent) "libraries"
 foreach ($lib in $VersionData.libraries) {
     if ($lib.downloads -and $lib.downloads.artifact) {
         $artifact = $lib.downloads.artifact
@@ -72,49 +72,18 @@ foreach ($lib in $VersionData.libraries) {
         if (-not (Test-Path $libDir)) {
             New-Item -ItemType Directory -Path $libDir -Force | Out-Null
         }
-        if (-not (Test-Path $libPath)) {
-            Info "Downloading library: $($lib.name)"
-            try {
-                Invoke-WebRequest -Uri $artifact.url -OutFile $libPath -UseBasicParsing -ErrorAction Stop
-            } catch {
-                Write-Warning "Failed to download library $($lib.name) from $($artifact.url)"
-            }
+        if (Test-Path $libPath) {
+            Info "Library already exists, skipping download: $($lib.name)"
+            continue
+        }
+        Info "Downloading library: $($lib.name)"
+        try {
+            Invoke-WebRequest -Uri $artifact.url -OutFile $libPath -UseBasicParsing -ErrorAction Stop
+        } catch {
+            Write-Warning "Failed to download library $($lib.name) from $($artifact.url)"
         }
     }
 }
-
-# if ($VersionData.assetIndex -and $VersionData.assetIndex.url) {
-#     $AssetIndexUrl = $VersionData.assetIndex.url
-#     $AssetsDir = Join-Path $WorkDir "assets"
-#     Info "Fetching asset index..."
-#     try {
-#         $AssetIndex = Invoke-WebRequest -Uri $AssetIndexUrl -UseBasicParsing | ConvertFrom-Json
-#     } catch {
-#         Write-Warning "Failed to retrieve asset index from $AssetIndexUrl"
-#         $AssetIndex = $null
-#     }
-#     if ($AssetIndex -and $AssetIndex.objects) {
-#         foreach ($AssetPath in $AssetIndex.objects.PSObject.Properties.Name) {
-#             $AssetInfo = $AssetIndex.objects.$AssetPath
-#             $Hash = $AssetInfo.hash
-#             $Subdir = $Hash.Substring(0, 2)
-#             $AssetUrl = "https://resources.download.minecraft.net/$Subdir/$Hash"
-#             $LocalAssetPath = Join-Path $AssetsDir $AssetPath
-#             $LocalAssetDir = Split-Path $LocalAssetPath -Parent
-#             if (-not (Test-Path $LocalAssetDir)) {
-#                 New-Item -ItemType Directory -Path $LocalAssetDir -Force | Out-Null
-#             }
-#             if (-not (Test-Path $LocalAssetPath)) {
-#                 Info "Downloading asset: $AssetPath"
-#                 try {
-#                     Invoke-WebRequest -Uri $AssetUrl -OutFile $LocalAssetPath -UseBasicParsing -ErrorAction Stop
-#                 } catch {
-#                     Write-Warning "Failed to download asset $AssetPath from $AssetUrl"
-#                 }
-#             }
-#         }
-#     }
-# }
 
 $ServerJarUrl = $VersionData.downloads.server.url
 if (-not $ServerJarUrl) {
